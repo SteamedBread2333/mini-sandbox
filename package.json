@@ -3,25 +3,25 @@
   "version": "0.1.0",
   "description": "A tiny UMD execution utility with a pure-JS interpreter (for environments that disallow eval/new Function).",
   "license": "MIT",
-  "type": "module",
+  "type": "commonjs",
   "sideEffects": false,
   "files": [
     "dist",
     "README.md"
   ],
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     },
     "./umd": {
       "types": "./dist/umd/index.d.ts",
-      "import": "./dist/umd/index.js",
-      "require": "./dist/umd/index.cjs"
+      "import": "./dist/umd/index.mjs",
+      "require": "./dist/umd/index.js"
     }
   },
   "scripts": {
