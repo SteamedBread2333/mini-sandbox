@@ -1,0 +1,102 @@
+// NOTE:
+// - This file is a logic-preserving port of the original miniprogram sandbox helper.
+// - Public API names intentionally avoid "eval/eval5" wording.
+
+import { Interpreter, Function as InterpreterFunction } from '../internal/vendor/js-interpreter/index'
+
+export type UmdExecuteOptions = {
+  /** Execution timeout (ms). Default: 8000 */
+  timeoutMs?: number
+  /**
+   * Some UMD bundles may also attach exports to a global name (e.g. "_").
+   * Fallback only: if `module.exports` is empty, we will try this name.
+   */
+  globalVarName?: string
+}
+
+function sanitizeForInterpreter(code: string): string {
+  // The interpreter does not support strict mode. Remove typical `"use strict";` directives.
+  return code.replace(/(^|[\n;])\s*(['"])use strict\2\s*;?/g, '$1')
+}
+
+function buildRootContext(): Record<string, any> {
+  // Minimal whitelist: provide common built-ins without exposing the full global object.
+  const g: any = globalThis as any
+  return {
+    Object: g.Object,
+    Array: g.Array,
+    // Provide interpreter Function (helps libs that probe global Function)
+    Function: InterpreterFunction,
+    Number: g.Number,
+    String: g.String,
+    Boolean: g.Boolean,
+    Math: g.Math,
+    Date: g.Date,
+    RegExp: g.RegExp,
+    Error: g.Error,
+    TypeError: g.TypeError,
+    JSON: g.JSON,
+    parseInt: g.parseInt,
+    parseFloat: g.parseFloat,
+    isNaN: g.isNaN,
+    isFinite: g.isFinite,
+    encodeURI: g.encodeURI,
+    decodeURI: g.decodeURI,
+    encodeURIComponent: g.encodeURIComponent,
+    decodeURIComponent: g.decodeURIComponent,
+  }
+}
+
+export function executeUmd<T = unknown>(
+  code: string,
+  options: UmdExecuteOptions = {},
+): { exported: T; costMs: number } {
+  const timeoutMs = options.timeoutMs ?? 8000
+  const globalVarName = options.globalVarName
+
+  const rootContext = buildRootContext()
+  /**
+   * Key point:
+   * - Interpreter "global object" is the sandbox itself (this/globalThis/window in code)
+   * - Some libs read built-in prototypes, so these built-ins must exist on sandbox too
+   */
+  const sandbox: Record<string, any> = Object.assign({}, rootContext, {
+    console: (globalThis as any).console,
+  })
+
+  const interpreter = new Interpreter(sandbox, {
+    timeout: timeoutMs,
+    rootContext,
+    globalContextInFunction: sandbox,
+  })
+
+  const sanitized = sanitizeForInterpreter(code)
+
+  const bootstrap = `
+    var globalThis = this;
+    var self = this;
+    var window = this;
+    var global = this;
+    var define = undefined;
+
+    // CommonJS env
+    var module = { exports: {} };
+    var exports = module.exports;
+
+    // require stub: if UMD truly requires deps, throw immediately
+    function require(name) { throw new Error('Remote UMD require(\"' + name + '\") is not supported'); }
+
+    ${sanitized}
+
+    // Prefer module.exports; fallback to global var name if provided
+    ;(function(){
+      var ex = module.exports;
+      if (ex && (typeof ex === 'object' || typeof ex === 'function')) return ex;
+      ${globalVarName ? `return this[${JSON.stringify(globalVarName)}];` : 'return ex;'}
+    }).call(this);
+  `
+
+  const exported = interpreter.evaluate(bootstrap) as T
+  return { exported, costMs: interpreter.getExecutionTime() }
+}
+
