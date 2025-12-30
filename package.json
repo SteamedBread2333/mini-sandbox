@@ -1,5 +1,5 @@
 {
-  "name": "mini-sandbox",
+  "name": "minisandbox",
   "version": "0.1.0",
   "description": "A tiny UMD execution utility with a pure-JS interpreter (for environments that disallow eval/new Function).",
   "license": "MIT",
