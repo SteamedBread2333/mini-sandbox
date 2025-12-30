@@ -1,19 +1,19 @@
-# mini-sandbox
+# msdbox
 
-在禁用 `eval/new Function` 的环境里执行 **UMD 脚本文本**，并拿到其 `module.exports`（或可选从全局变量名兜底取回导出）。
+Execute **UMD script source text** in environments that disallow `eval/new Function`, and retrieve `module.exports` (optionally falling back to a global variable name).
 
-## 安装
+## Install
 
 ```bash
-npm i mini-sandbox
+npm i msdbox
 ```
 
-## 使用
+## Usage
 
-### 直接导入
+### Direct import
 
 ```ts
-import { executeUmd } from 'mini-sandbox'
+import { executeUmd } from 'msdbox'
 
 const { exported, costMs } = executeUmd<{ hello: string }>(
   'module.exports = { hello: \"world\" }',
@@ -23,33 +23,33 @@ const { exported, costMs } = executeUmd<{ hello: string }>(
 console.log(exported.hello, costMs)
 ```
 
-### 按需导入（子路径）
+### Subpath import (on-demand)
 
 ```ts
-import { executeUmd } from 'mini-sandbox/umd'
+import { executeUmd } from 'msdbox/umd'
 ```
 
 ## API
 
 ### `executeUmd<T>(code, options?)`
 
-- **参数**
-  - **`code`**: `string`，UMD 脚本文本
-  - **`options.timeoutMs`**: `number`，超时时间（ms），默认 `8000`
-  - **`options.globalVarName`**: `string`，兜底用的全局变量名（当 `module.exports` 为空时尝试从 `this[globalVarName]` 获取）
-- **返回**
+- **Parameters**
+  - **`code`**: `string` — UMD script source text
+  - **`options.timeoutMs`**: `number` — timeout (ms), default `8000`
+  - **`options.globalVarName`**: `string` — fallback global variable name (used only if `module.exports` is empty; reads from `this[globalVarName]`)
+- **Returns**
   - **`exported`**: `T`
-  - **`costMs`**: `number`（解释器内部统计的执行耗时）
+  - **`costMs`**: `number` — execution time recorded by the interpreter
 
-## 构建
+## Build
 
 ```bash
 npm run build
 ```
 
-构建产物输出到 `dist/`，并通过 `package.json#exports` 提供可 tree-shake 的 ESM/CJS 双格式入口。
+Build outputs are written to `dist/` and exposed via `package.json#exports` (both ESM and CJS entrypoints, tree-shakable).
 
-## 打包与本地链接
+## Pack & local link
 
 ```bash
 npm pack

@@ -1,4 +1,4 @@
-// 小程序模块解析不保证支持目录默认 index：显式指向入口文件
+// Mini-program module resolution may not support directory default index; import the entry explicitly.
 import { parse } from "acorn";
 import {
   Messages,
