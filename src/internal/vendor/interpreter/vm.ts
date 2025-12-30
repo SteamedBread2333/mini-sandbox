@@ -1,5 +1,5 @@
 import { Interpreter } from "./engine/main";
-import { VMContext, CompileOptions, ScriptOptions } from "./types";
+import type { VMContext, CompileOptions, ScriptOptions } from "./types";
 
 // TODO:
 // add tests

@@ -1,5 +1,8 @@
 import type * as ESTree from "estree";
 
+// Expose ESTree types for other internal modules (type-only export).
+export type { ESTree };
+
 export type Node =
 	| ESTree.Node
 	| ESTree.BinaryExpression

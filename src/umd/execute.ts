@@ -2,7 +2,7 @@
 // - This file is a logic-preserving port of the original miniprogram sandbox helper.
 // - Public API names intentionally avoid "eval/eval5" wording.
 
-import { Interpreter, Function as InterpreterFunction } from '../internal/vendor/js-interpreter/index'
+import { Interpreter, Function as InterpreterFunction } from '../internal/vendor/interpreter/index'
 
 export type UmdExecuteOptions = {
   /** Execution timeout (ms). Default: 8000 */
@@ -51,7 +51,8 @@ export function executeUmd<T = unknown>(
   code: string,
   options: UmdExecuteOptions = {},
 ): { exported: T; costMs: number } {
-  const timeoutMs = options.timeoutMs ?? 8000
+  // Avoid nullish-coalescing to keep compatibility with older JS parsers.
+  const timeoutMs = (options.timeoutMs !== undefined && options.timeoutMs !== null) ? options.timeoutMs : 8000
   const globalVarName = options.globalVarName
 
   const rootContext = buildRootContext()

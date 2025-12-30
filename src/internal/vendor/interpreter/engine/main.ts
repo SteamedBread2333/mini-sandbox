@@ -2,12 +2,12 @@
 import { parse } from "acorn";
 import {
   Messages,
-  MessageItem,
   InterruptThrowError,
   InterruptThrowReferenceError,
   InterruptThrowSyntaxError,
 } from "./messages";
-import { Node, ESTree } from "./nodes";
+import type { MessageItem } from "./messages";
+import type { Node, ESTree } from "./nodes";
 
 const version = "%VERSION%";
 
@@ -301,41 +301,54 @@ if (typeof Reflect !== "undefined") {
 }
 
 export class Interpreter {
-  static readonly version: string = version;
-  static readonly eval = internalEval;
-  static readonly Function = internalFunction;
-  static ecmaVersion: ECMA_VERSION = 5;
+  // ⚠️ Compatibility: some runtimes (e.g. WeChat DevTools preview) do not support class fields
+  // such as `static x = 1` or `x = []`. Declare only; initialize after class definition / in ctor.
+  static readonly version: string;
+  static readonly eval: typeof internalEval;
+  static readonly Function: typeof internalFunction;
+  static ecmaVersion: ECMA_VERSION;
   // alert.call(globalContextInFunction, 1);
   // fix: alert.call({}, 1); // Illegal invocation
   // function func(){
   //     this;// Interpreter.globalContextInFunction
   // }
   // func()
-  static globalContextInFunction: any = void 0;
-  static global: Context = Object.create(null);
+  static globalContextInFunction: any;
+  static global: Context;
 
   // last expression value
   protected value: any;
   protected context: Context | Scope;
   protected globalContext: Context;
   protected source: string;
-  protected sourceList: string[] = [];
+  protected sourceList: string[];
   protected currentScope: Scope;
   protected globalScope: Scope;
   protected currentContext: Context;
   protected options: Options;
   protected callStack: string[];
-  protected collectDeclVars: CollectDeclarations = Object.create(null);
-  protected collectDeclFuncs: CollectDeclarations = Object.create(null);
-  protected isVarDeclMode: boolean = false;
+  protected collectDeclVars: CollectDeclarations;
+  protected collectDeclFuncs: CollectDeclarations;
+  protected isVarDeclMode: boolean;
 
-  protected lastExecNode: Node | null = null;
+  protected lastExecNode: Node | null;
 
-  protected isRunning: boolean = false;
+  protected isRunning: boolean;
   protected execStartTime: number;
   protected execEndTime: number;
 
   constructor(context: Context | Scope = Interpreter.global, options: Options = {}) {
+    // ---------- instance field init (avoid class fields syntax) ----------
+    this.sourceList = [];
+    this.collectDeclVars = Object.create(null);
+    this.collectDeclFuncs = Object.create(null);
+    this.isVarDeclMode = false;
+    this.lastExecNode = null;
+    this.isRunning = false;
+    this.execStartTime = 0;
+    this.execEndTime = 0;
+    // -------------------------------------------------------------------
+
     this.options = {
       ecmaVersion: options.ecmaVersion || Interpreter.ecmaVersion,
       timeout: options.timeout || 0,
@@ -903,7 +916,9 @@ export class Interpreter {
       };
     } = Object.create(null);
 
-    node.properties.forEach(property => {
+    // NOTE: estree types allow SpreadElement here; keep runtime behavior unchanged and
+    // relax typing for DTS generation.
+    (node.properties as any[]).forEach((property: any) => {
       const kind = property.kind;
       const key = getKey(property.key);
 
@@ -965,8 +980,10 @@ export class Interpreter {
   // [1,2,3]
   protected arrayExpressionHandler(node: ESTree.ArrayExpression) {
     //fix: [,,,1,2]
-    const items: Array<BaseClosure> = node.elements.map(element =>
-      element ? this.createClosure(element) : element
+    // NOTE: estree types allow SpreadElement here; keep runtime behavior unchanged and
+    // relax typing for DTS generation.
+    const items: Array<BaseClosure> = (node.elements as any[]).map((element: any) =>
+      element ? (this.createClosure(element) as any) : element
     );
 
     return () => {
@@ -1134,7 +1151,9 @@ export class Interpreter {
   // func()
   protected callExpressionHandler(node: ESTree.CallExpression): BaseClosure {
     const funcGetter = this.createCallFunctionGetter(node.callee);
-    const argsGetter = node.arguments.map(arg => this.createClosure(arg));
+    // NOTE: estree types allow SpreadElement here; keep runtime behavior unchanged and
+    // relax typing for DTS generation.
+    const argsGetter = (node.arguments as any[]).map((arg: any) => this.createClosure(arg) as any);
     return () => {
       return funcGetter()(...argsGetter.map(arg => arg()));
     };
@@ -1245,7 +1264,9 @@ export class Interpreter {
   protected newExpressionHandler(node: ESTree.NewExpression): BaseClosure {
     const source = this.source;
     const expression = this.createClosure(node.callee);
-    const args = node.arguments.map(arg => this.createClosure(arg));
+    // NOTE: estree types allow SpreadElement here; keep runtime behavior unchanged and
+    // relax typing for DTS generation.
+    const args = (node.arguments as any[]).map((arg: any) => this.createClosure(arg) as any);
 
     return () => {
       const construct = expression();
@@ -1970,7 +1991,7 @@ export class Interpreter {
     // s.foo;  node.computed = false
     return node.computed
       ? this.createClosure(node.property)
-      : this.createObjectKeyGetter(node.property);
+      : this.createObjectKeyGetter(node.property as any);
   }
 
   // for UnaryExpression UpdateExpression AssignmentExpression
@@ -2072,3 +2093,13 @@ export class Interpreter {
     return this.value;
   }
 }
+
+// ---------- static field init (avoid `static x = ...` class fields syntax) ----------
+// Use `as any` to bypass readonly TS constraint (we must assign at runtime).
+;(Interpreter as any).version = version;
+;(Interpreter as any).eval = internalEval;
+;(Interpreter as any).Function = internalFunction;
+Interpreter.ecmaVersion = 5;
+Interpreter.globalContextInFunction = void 0;
+Interpreter.global = Object.create(null);
+// -----------------------------------------------------------------------------------
