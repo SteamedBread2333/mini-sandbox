@@ -1,42 +1,39 @@
-name: Publish to npm
+name: Publish NPM Package
 
 on:
   release:
     types: [published]
   workflow_dispatch:
-    inputs:
-      tag:
-        description: "npm dist-tag (e.g. latest, next). Default: latest"
-        required: false
-        default: "latest"
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: "https://registry.npmjs.org/"
+      - run: npm ci
+      - run: npm run build
 
-      - name: Install
-        run: npm ci
-
-      - name: Publish
+  publish-npm:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+      - run: npm ci
+      - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          npm run prepack
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            npm publish --registry https://registry.npmjs.org/ --access public --tag "${{ inputs.tag }}"
-          else
-            npm publish --registry https://registry.npmjs.org/ --access public
-          fi
 
