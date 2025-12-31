@@ -1,6 +1,6 @@
 {
   "name": "msdbox",
-  "version": "0.1.3",
+  "version": "0.1.5",
   "description": "A tiny UMD execution utility with a pure-JS interpreter (for environments that disallow eval/new Function).",
   "license": "MIT",
   "type": "commonjs",
@@ -28,7 +28,9 @@
     "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
     "build": "tsup",
     "prune:dist": "node scripts/prune-dist.cjs",
-    "prepack": "npm run clean && npm run build && npm run prune:dist"
+    "prepack": "npm run clean && npm run build && npm run prune:dist",
+    "publish:npm": "node scripts/publish-npm.cjs",
+    "publish:github": "node scripts/publish-github-packages.cjs"
   },
   "dependencies": {
     "acorn": "^8.14.0"

@@ -1,0 +1,49 @@
+name: Publish to GitHub Packages
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      # This repo may not have a test suite; build is used as the minimum verification gate.
+      - run: npm run build
+
+  publish-gpr:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com/
+          scope: '@${{ github.repository_owner }}'
+      - run: npm ci
+      - name: Update package.json for GitHub Packages
+        run: |
+          npm pkg set name="@${{ github.repository_owner }}/msdbox"
+          npm pkg set publishConfig.registry="https://npm.pkg.github.com"
+      - name: Verify registry configuration
+        run: |
+          echo "Package name: $(npm pkg get name)"
+          echo "Registry: $(npm config get registry)"
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

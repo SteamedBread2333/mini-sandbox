@@ -1084,7 +1084,7 @@ export class Interpreter {
           // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval
           // var eval = eval;
           // function test(){
-          //    eval(...); //note: use local scope in eval5，but in Browser is use global scope
+          //    eval(...); // note: this interpreter uses local scope for eval; browsers use global scope
           // }
           if (node.type === "Identifier" && func.__IS_EVAL_FUNC && name === "eval") {
             return (code?: string) => {

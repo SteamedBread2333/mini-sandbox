@@ -41,6 +41,33 @@ import { executeUmd } from 'msdbox/umd'
   - **`exported`**: `T`
   - **`costMs`**: `number` — execution time recorded by the interpreter
 
+## Advanced: Interpreter API
+
+If you need lower-level control (e.g. run non-UMD snippets, reuse a single context, or implement your own bootstrap), you can use the underlying interpreter exports.
+
+### Exports
+
+```ts
+import { Interpreter, evaluate, vm, InterpreterFunction } from 'msdbox'
+```
+
+- **`Interpreter`**: the interpreter class (runs code against a provided sandbox/context)
+- **`evaluate`**: convenience wrapper to run code in a context
+- **`vm`**: Node-like helpers (`runInContext`, `compileFunction`, etc.)
+- **`InterpreterFunction`**: interpreter-backed `Function` constructor (exported as a safer alias to avoid confusion with the global `Function`)
+
+### Minimal example
+
+```ts
+import { Interpreter } from 'msdbox'
+
+const sandbox: Record<string, any> = { console }
+const interpreter = new Interpreter(sandbox, { timeout: 1000 })
+
+const result = interpreter.evaluate('var x = 1 + 2; x')
+console.log(result) // 3
+```
+
 ## Build
 
 ```bash

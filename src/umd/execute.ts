@@ -1,6 +1,6 @@
 // NOTE:
-// - This file is a logic-preserving port of the original miniprogram sandbox helper.
-// - Public API names intentionally avoid "eval/eval5" wording.
+// - This file is a logic-preserving port of the original mini-program sandbox helper.
+// - Public API names intentionally avoid "eval" related wording.
 
 import { Interpreter, Function as InterpreterFunction } from '../internal/vendor/interpreter/index'
 
