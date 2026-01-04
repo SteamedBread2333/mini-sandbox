@@ -1,6 +1,6 @@
 # msdbox
 
-Execute **UMD script source text** in environments that disallow `eval/new Function`, and retrieve `module.exports` (optionally falling back to a global variable name).
+A lightweight JavaScript interpreter that executes UMD bundles and JavaScript code in secure sandboxed environments, perfect for environments with Content Security Policy (CSP) restrictions that disallow `eval` and `new Function()`.
 
 ## Features
 
