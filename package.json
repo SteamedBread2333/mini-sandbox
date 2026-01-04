@@ -1,6 +1,6 @@
 {
   "name": "msdbox",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "A tiny UMD execution utility with a pure-JS interpreter (for environments that disallow eval/new Function).",
   "keywords": [
     "interpreter",
