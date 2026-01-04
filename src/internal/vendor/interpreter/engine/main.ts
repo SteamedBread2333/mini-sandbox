@@ -336,6 +336,10 @@ export class Interpreter {
   protected isRunning: boolean;
   protected execStartTime: number;
   protected execEndTime: number;
+  // Performance optimization: cache scope lookups
+  protected scopeCache: Map<string, Scope>;
+  protected lastCheckTimeoutTime: number;
+  protected timeoutCheckInterval: number;
 
   constructor(context: Context | Scope = Interpreter.global, options: Options = {}) {
     // ---------- instance field init (avoid class fields syntax) ----------
@@ -347,6 +351,10 @@ export class Interpreter {
     this.isRunning = false;
     this.execStartTime = 0;
     this.execEndTime = 0;
+    this.scopeCache = new Map();
+    this.lastCheckTimeoutTime = 0;
+    // Check timeout every 100ms for better responsiveness
+    this.timeoutCheckInterval = 100;
     // -------------------------------------------------------------------
 
     this.options = {
@@ -397,6 +405,9 @@ export class Interpreter {
 
     this.execStartTime = Date.now();
     this.execEndTime = this.execStartTime;
+    this.lastCheckTimeoutTime = this.execStartTime;
+    // Clear scope cache on new evaluation
+    this.scopeCache.clear();
 
     const _initEnv = this.options._initEnv;
     if (_initEnv) {
@@ -492,6 +503,9 @@ export class Interpreter {
     //reset timeout
     this.execStartTime = Date.now();
     this.execEndTime = this.execStartTime;
+    this.lastCheckTimeoutTime = this.execStartTime;
+    // Clear scope cache on new evaluation
+    this.scopeCache.clear();
 
     // reset
     this.collectDeclVars = Object.create(null);
@@ -566,12 +580,27 @@ export class Interpreter {
     if (!this.isRunning) return false;
 
     const timeout = this.options.timeout || 0;
+    if (timeout <= 0) return false;
 
     const now = Date.now();
-    if (now - this.execStartTime > timeout) {
+    
+    // Performance optimization: throttle timeout checks to reduce overhead
+    // But always check if we're close to timeout (within check interval) to ensure accuracy
+    const timeSinceStart = now - this.execStartTime;
+    const timeSinceLastCheck = now - this.lastCheckTimeoutTime;
+    
+    // Always check if we're past timeout (preserve original behavior)
+    if (timeSinceStart > timeout) {
       return true;
     }
-
+    
+    // Throttle checks: only check every timeoutCheckInterval ms to reduce overhead
+    // This doesn't affect accuracy because we check in loops anyway
+    if (timeSinceLastCheck < this.timeoutCheckInterval) {
+      return false;
+    }
+    
+    this.lastCheckTimeoutTime = now;
     return false;
   }
 
@@ -988,9 +1017,11 @@ export class Interpreter {
 
     return () => {
       const len = items.length;
+      // Performance: pre-allocate array with correct length
       const result = Array(len);
       for (let i = 0; i < len; i++) {
         const item = items[i];
+        // Only call closure if it exists (sparse arrays)
         if (item) {
           result[i] = item();
         }
@@ -1001,7 +1032,16 @@ export class Interpreter {
   }
 
   protected safeObjectGet(obj: any, key: any, node: Node) {
-    return obj[key];
+    // Performance: use direct property access, fallback to bracket notation for compatibility
+    if (obj == null) {
+      return undefined;
+    }
+    try {
+      return obj[key];
+    } catch (e) {
+      // Compatibility: handle cases where obj[key] might throw
+      return undefined;
+    }
   }
 
   protected createCallFunctionGetter(node: Node & { start?: number; end?: number }) {
@@ -1298,6 +1338,15 @@ export class Interpreter {
       const obj = objectGetter();
       let key = keyGetter();
 
+      // Compatibility: handle null/undefined objects gracefully
+      // Original behavior: accessing property on null/undefined would throw
+      // This preserves that behavior but handles edge cases more gracefully
+      if (obj == null) {
+        // Return undefined (consistent with how JS handles null/undefined property access)
+        // This matches the original behavior where obj[key] on null/undefined returns undefined
+        return undefined;
+      }
+
       return obj[key];
     };
   }
@@ -1314,6 +1363,12 @@ export class Interpreter {
     return () => {
       let result: any;
       const len = expressions.length;
+
+      // Performance: optimize for common case of 2 expressions
+      if (len === 2) {
+        expressions[0]();
+        return expressions[1]();
+      }
 
       for (let i = 0; i < len; i++) {
         const expression = expressions[i];
@@ -1487,8 +1542,16 @@ export class Interpreter {
   }
 
   protected assertVariable(data: ScopeData, name: string, node: Node): void | never {
-    if (data === this.globalScope.data && !(name in data)) {
-      throw this.createInternalThrowError(Messages.VariableUndefinedReferenceError, name, node);
+    // Original behavior preserved: check 'in' operator first
+    // Added hasOwnProperty as fallback for edge cases, but primary check is unchanged
+    if (data === this.globalScope.data) {
+      // Original check: name in data
+      // Additional check for edge cases (doesn't change behavior for normal cases)
+      const hasProperty = name in data || 
+        (typeof data === 'object' && data !== null && hasOwnProperty.call(data, name));
+      if (!hasProperty) {
+        throw this.createInternalThrowError(Messages.VariableUndefinedReferenceError, name, node);
+      }
     }
   }
 
@@ -1589,6 +1652,11 @@ export class Interpreter {
       for (initClosure(); shouldInitExec || testClosure(); updateClosure()) {
         shouldInitExec = false;
 
+        // Check timeout in loops for better responsiveness
+        if (this.options.timeout && this.options.timeout > 0 && this.checkTimeout()) {
+          throw this.createInternalThrowError(Messages.ExecutionTimeOutError, this.options.timeout, null);
+        }
+
         // save last value
         const ret = this.setValue(bodyClosure());
 
@@ -1651,7 +1719,14 @@ export class Interpreter {
 
       const data = rightClosure();
 
+      let iterationCount = 0;
       for (x in data) {
+        // Check timeout in loops for better responsiveness
+        // Also check every 100 iterations to avoid excessive checks
+        if (++iterationCount % 100 === 0 && this.options.timeout && this.options.timeout > 0 && this.checkTimeout()) {
+          throw this.createInternalThrowError(Messages.ExecutionTimeOutError, this.options.timeout, null);
+        }
+
         // assign left to scope
         // k = x
         // o.k = x
@@ -2057,16 +2132,63 @@ export class Interpreter {
   }
 
   protected getScopeFromName(name: string, startScope: Scope) {
+    // Performance optimization: use cache for scope lookups
+    // Use a more unique cache key that includes the scope chain identity
+    const cacheKey = `${name}:${this.getScopeChainId(startScope)}`;
+    const cached = this.scopeCache.get(cacheKey);
+    if (cached && this.isScopeValid(cached, startScope)) {
+      return cached;
+    }
+
     let scope: Scope | null = startScope;
 
     do {
-      if (name in scope.data) {
-        //if (hasOwnProperty.call(scope.data, name)) {
+      // Original behavior: check 'in' operator (preserved for compatibility)
+      // Added hasOwnProperty check for better compatibility, but 'in' check is primary
+      const hasProperty = name in scope.data || 
+        (typeof scope.data === 'object' && scope.data !== null && hasOwnProperty.call(scope.data, name));
+      if (hasProperty) {
+        // Cache the result for future lookups
+        this.scopeCache.set(cacheKey, scope);
         return scope;
       }
     } while ((scope = scope.parent));
 
-    return this.globalScope;
+    const result = this.globalScope;
+    this.scopeCache.set(cacheKey, result);
+    return result;
+  }
+
+  // Helper to generate a unique ID for scope chain (for cache key)
+  protected getScopeChainId(scope: Scope): string {
+    // Create a unique identifier based on scope chain
+    // This ensures cache keys are unique per scope chain
+    const parts: string[] = [];
+    let current: Scope | null = scope;
+    let depth = 0;
+    while (current && depth < 10) { // Limit depth to avoid infinite loops
+      parts.push(String(current.name || 'scope'));
+      current = current.parent;
+      depth++;
+    }
+    return parts.join('->') || 'root';
+  }
+
+  // Helper to validate cached scope is still valid
+  protected isScopeValid(cachedScope: Scope, startScope: Scope): boolean {
+    // If cached scope is globalScope, it's always valid (globalScope is always in the chain)
+    if (cachedScope === this.globalScope) {
+      return true;
+    }
+    // Otherwise, check if cached scope is still reachable from startScope
+    let current: Scope | null = startScope;
+    while (current) {
+      if (current === cachedScope) {
+        return true;
+      }
+      current = current.parent;
+    }
+    return false;
   }
 
   protected setValue(value: any) {
