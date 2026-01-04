@@ -1,5 +1,5 @@
-export { executeUmd } from './umd'
-export type { UmdExecuteOptions } from './umd'
+export { executeUmd } from './execute'
+export type { UmdExecuteOptions } from './execute'
 
 // Re-export interpreter runtime (vendored) for advanced usage.
 export { Interpreter, vm, evaluate, Function } from './internal/vendor/interpreter'

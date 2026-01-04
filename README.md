@@ -31,13 +31,6 @@ const { exported, costMs } = executeUmd<{ hello: string }>(
 console.log(exported.hello, costMs) // "world", <execution-time>
 ```
 
-### Subpath Import (On-demand)
-
-For better tree-shaking, use the subpath import:
-
-```ts
-import { executeUmd } from 'msdbox/umd'
-```
 
 ## API Reference
 
@@ -143,7 +136,7 @@ npm link
 
 ### Project Structure
 
-- `src/umd/` — UMD execution utilities
+- `src/execute.ts` — UMD execution utilities
 - `src/internal/vendor/interpreter/` — Pure JavaScript interpreter implementation
 - `dist/` — Compiled output (generated)
 

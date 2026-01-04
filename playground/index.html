@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>msdbox Playground</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    header p {
+      margin: 10px 0 20px 0;
+    }
+    #backBtn {
+      margin-top: 15px;
+    }
+    .back-btn {
+      display: inline-block;
+      padding: 8px 16px;
+      background: #666;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      border: none;
+      font-size: 14px;
+    }
+    .back-btn:hover {
+      background: #555;
+    }
+    .menu {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 15px;
+    }
+    .menu-item {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .menu-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    .menu-item h2 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: #2196F3;
+    }
+    .menu-item p {
+      font-size: 14px;
+      color: #666;
+    }
+    .demo-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .demo-section {
+      margin-bottom: 20px;
+    }
+    .demo-section h2 {
+      font-size: 20px;
+      margin-bottom: 15px;
+      color: #2196F3;
+    }
+    .code-editor {
+      width: 100%;
+      min-height: 200px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      resize: vertical;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin: 15px 0;
+    }
+    button {
+      padding: 10px 20px;
+      background: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #1976D2;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .output {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      min-height: 100px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .error {
+      color: #d32f2f;
+      background: #ffebee;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+    .success {
+      color: #2e7d32;
+      background: #e8f5e9;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+    .info {
+      background: #e3f2fd;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #2196F3;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .library-info {
+      background: #fff3e0;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    .library-info code {
+      background: #fff;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>msdbox Playground</h1>
+      <p style="font-size: 14px; color: #666;">All code execution uses msdbox interpreter (no native eval/Function)</p>
+      <div id="backBtn" style="display: none;">
+        <button class="back-btn" onclick="showHome()">← Back to Home</button>
+      </div>
+    </header>
+
+    <div id="home">
+      <div class="menu">
+        <div class="menu-item" onclick="showDemo('self-interpreter')">
+          <h2>1. Self-interpreter</h2>
+          <p>Run the interpreter itself using the interpreter</p>
+        </div>
+        <div class="menu-item" onclick="showDemo('timeout')">
+          <h2>2. Run with timeout</h2>
+          <p>Execute code with timeout protection</p>
+        </div>
+        <div class="menu-item" onclick="showDemo('sandbox')">
+          <h2>3. Run with sandbox</h2>
+          <p>Execute code in an isolated sandbox environment</p>
+        </div>
+        <div class="menu-item" onclick="showDemo('jquery')">
+          <h2>4. Run jQuery library</h2>
+          <p>Load and execute jQuery UMD bundle</p>
+        </div>
+        <div class="menu-item" onclick="showDemo('react')">
+          <h2>5. Run React library</h2>
+          <p>Load and execute React UMD bundle</p>
+        </div>
+        <div class="menu-item" onclick="showDemo('vue')">
+          <h2>6. Run Vue library</h2>
+          <p>Load and execute Vue UMD bundle</p>
+        </div>
+        <div class="menu-item" onclick="showDemo('echarts')">
+          <h2>7. Run ECharts library</h2>
+          <p>Load and execute ECharts UMD bundle</p>
+        </div>
+        <div class="menu-item" onclick="showDemo('angular')">
+          <h2>8. Run Angular.js library</h2>
+          <p>Load and execute Angular.js UMD bundle</p>
+        </div>
+        <div class="menu-item" onclick="showDemo('knockout')">
+          <h2>9. Run Knockout library</h2>
+          <p>Load and execute Knockout UMD bundle</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="demo" style="display: none;">
+      <div class="demo-container" id="demoContent"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/acorn@8.14.0/dist/acorn.min.js"></script>
+  <script>
+    if (typeof window !== 'undefined' && typeof acorn !== 'undefined') {
+      window.acorn = acorn;
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/msdbox@0.1.6/dist/index.umd.js"></script>
+  <script>
+    const { Interpreter, executeUmd } = msdbox || {};
+
+    function showHome() {
+      document.getElementById('home').style.display = 'block';
+      document.getElementById('demo').style.display = 'none';
+      document.getElementById('backBtn').style.display = 'none';
+      // Clear hash when showing home
+      if (window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    }
+
+    function showDemo(demoType) {
+      document.getElementById('home').style.display = 'none';
+      document.getElementById('demo').style.display = 'block';
+      document.getElementById('backBtn').style.display = 'block';
+      
+      // Update URL hash to preserve page state on refresh
+      window.location.hash = demoType;
+
+      const demos = {
+        'self-interpreter': createSelfInterpreterDemo,
+        'timeout': createTimeoutDemo,
+        'sandbox': createSandboxDemo,
+        'jquery': createLibraryDemo('jquery', 'jQuery', 'https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js'),
+        'react': createLibraryDemo('react', 'React', 'https://unpkg.com/react@18/umd/react.development.js'),
+        'vue': createLibraryDemo('vue', 'Vue', 'https://unpkg.com/vue@3/dist/vue.global.prod.js'),
+        'echarts': createLibraryDemo('echarts', 'echarts', 'https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js'),
+        'angular': createLibraryDemo('angular', 'angular', 'https://cdn.jsdelivr.net/npm/angular@1.8.3/angular.min.js'),
+        'knockout': createLibraryDemo('knockout', 'ko', 'https://cdn.jsdelivr.net/npm/knockout@3.5.1/build/output/knockout-latest.js'),
+      };
+
+      const demoContent = document.getElementById('demoContent');
+      demoContent.innerHTML = '';
+      demos[demoType]?.(demoContent);
+    }
+
+    function createSelfInterpreterDemo(container) {
+      container.innerHTML = `
+        <div class="demo-section">
+          <h2>Self-interpreter</h2>
+          <div class="info">
+            This demo shows how the interpreter can execute itself. We'll create a simple interpreter instance and use it to evaluate code.
+          </div>
+          <textarea class="code-editor" id="code1">var x = 1;
+var y = 2;
+var sum = x + y;
+sum</textarea>
+          <div class="button-group">
+            <button onclick="runSelfInterpreter()">Run Code</button>
+          </div>
+          <div id="output1" class="output"></div>
+        </div>
+      `;
+
+      window.runSelfInterpreter = function() {
+        const code = document.getElementById('code1').value;
+        const output = document.getElementById('output1');
+        output.innerHTML = '<span class="loading"></span> Running...';
+
+        try {
+          const sandbox = { console };
+          const interpreter = new Interpreter(sandbox, { timeout: 5000 });
+          const result = interpreter.evaluate(code);
+          const time = interpreter.getExecutionTime();
+          output.innerHTML = `<div class="success">Result: ${JSON.stringify(result)}</div>Execution time: ${time}ms`;
+        } catch (error) {
+          output.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+        }
+      };
+    }
+
+    function createTimeoutDemo(container) {
+      container.innerHTML = `
+        <div class="demo-section">
+          <h2>Run with Timeout</h2>
+          <div class="info">
+            This demo shows timeout protection. The infinite loop will be interrupted when it exceeds the timeout duration.
+          </div>
+          <textarea class="code-editor" id="code2">while(1){}</textarea>
+          <div class="button-group">
+            <button onclick="runWithTimeout(5000)">Run with 5s timeout</button>
+          </div>
+          <div id="output2" class="output"></div>
+        </div>
+      `;
+
+      window.runWithTimeout = function(timeout) {
+        const code = document.getElementById('code2').value;
+        const output = document.getElementById('output2');
+        const startTime = Date.now();
+        output.innerHTML = `<span class="loading"></span> Running with ${timeout}ms timeout...`;
+
+        setTimeout(() => {
+          try {
+            // All code execution uses msdbox Interpreter (not native eval/Function)
+            const sandbox = { console };
+            const interpreter = new Interpreter(sandbox, { timeout });
+            const result = interpreter.evaluate(code);
+            const time = interpreter.getExecutionTime();
+            const totalTime = Date.now() - startTime;
+            output.innerHTML = `<div class="success">Result: ${JSON.stringify(result)}</div>Execution time: ${time}ms<br>Total time: ${totalTime}ms`;
+          } catch (error) {
+            const totalTime = Date.now() - startTime;
+            if (error.message.includes('timeout') || error.message.includes('TimeOut')) {
+              output.innerHTML = `<div class="success">Timeout triggered correctly!</div>Execution was interrupted after ${totalTime}ms (timeout: ${timeout}ms)`;
+            } else {
+              output.innerHTML = `<div class="error">Error: ${error.message}</div>Total time: ${totalTime}ms`;
+            }
+          }
+        }, 100);
+      };
+    }
+
+    function createSandboxDemo(container) {
+      container.innerHTML = `
+        <div class="demo-section">
+          <h2>Run with Sandbox</h2>
+          <div class="info">
+            This demo shows how code runs in an isolated sandbox. The code can only access the objects you provide in the sandbox.
+          </div>
+          <textarea class="code-editor" id="code3">// Sandbox provides: console, Date, customVar, Math, Array, Object
+var result = {
+  // ✅ Can access provided sandbox objects
+  sum: customVar + 10,
+  message: "Hello from sandbox",
+  timestamp: Date.now(),
+  sqrt: Math.sqrt(16),
+  array: Array.from([1, 2, 3]),
+  
+  // ✅ Can use standard JavaScript features
+  computed: (function() {
+    var x = 5;
+    return x * 2;
+  })(),
+  
+  // ❌ Try to access window (will fail - not in sandbox)
+  windowTest: (function() {
+    try {
+      return typeof window !== 'undefined' ? 'window exists' : 'window undefined';
+    } catch(e) {
+      return 'window access error: ' + e.message;
+    }
+  })(),
+  
+  // ❌ Try to access document (will fail - not in sandbox)
+  documentTest: (function() {
+    try {
+      return typeof document !== 'undefined' ? 'document exists' : 'document undefined';
+    } catch(e) {
+      return 'document access error: ' + e.message;
+    }
+  })(),
+  
+  // ❌ Try to access localStorage (will fail - not in sandbox)
+  localStorageTest: (function() {
+    try {
+      return typeof localStorage !== 'undefined' ? 'localStorage exists' : 'localStorage undefined';
+    } catch(e) {
+      return 'localStorage access error: ' + e.message;
+    }
+  })(),
+  
+  // ❌ Try to access fetch (will fail - not in sandbox)
+  fetchTest: (function() {
+    try {
+      return typeof fetch !== 'undefined' ? 'fetch exists' : 'fetch undefined';
+    } catch(e) {
+      return 'fetch access error: ' + e.message;
+    }
+  })(),
+  
+  // ✅ Can use provided console
+  consoleTest: (function() {
+    console.log('This works - console is provided in sandbox');
+    return 'console.log executed';
+  })()
+};
+
+result</textarea>
+          <div class="button-group">
+            <button onclick="runWithSandbox()">Run in Sandbox</button>
+          </div>
+          <div id="output3" class="output"></div>
+        </div>
+      `;
+
+      window.runWithSandbox = function() {
+        const code = document.getElementById('code3').value;
+        const output = document.getElementById('output3');
+        output.innerHTML = '<span class="loading"></span> Running...';
+
+        try {
+          // All code execution uses msdbox Interpreter (not native eval/Function)
+          // Sandbox only provides limited objects - code cannot access window, document, localStorage, fetch, etc.
+          const sandbox = {
+            console,
+            Date,
+            customVar: 42,
+            Math,
+            Array,
+            Object,
+          };
+          const interpreter = new Interpreter(sandbox, { timeout: 5000 });
+          const result = interpreter.evaluate(code);
+          const time = interpreter.getExecutionTime();
+          
+          // Format output to show what works and what doesn't
+          let outputHtml = `<div class="success">Execution completed successfully!</div>`;
+          outputHtml += `<div style="margin-top: 15px;"><strong>Result:</strong></div>`;
+          outputHtml += `<pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto;">${JSON.stringify(result, null, 2)}</pre>`;
+          outputHtml += `<div style="margin-top: 15px;"><strong>Sandbox Limitations:</strong></div>`;
+          outputHtml += `<ul style="margin: 10px 0; padding-left: 20px;">`;
+          outputHtml += `<li>✅ <strong>Available:</strong> console, Date, customVar, Math, Array, Object</li>`;
+          outputHtml += `<li>❌ <strong>Not Available:</strong> window, document, localStorage, fetch, XMLHttpRequest, setTimeout, setInterval</li>`;
+          outputHtml += `<li>📝 Code can only access objects explicitly provided in the sandbox</li>`;
+          outputHtml += `</ul>`;
+          outputHtml += `<div style="margin-top: 10px; color: #666; font-size: 12px;">Execution time: ${time}ms</div>`;
+          
+          output.innerHTML = outputHtml;
+        } catch (error) {
+          output.innerHTML = `<div class="error">Error: ${error.message}</div><div style="margin-top: 10px; color: #666;">This error demonstrates that the sandbox restricts access to unauthorized resources.</div>`;
+        }
+      };
+    }
+
+    function createLibraryDemo(libName, globalVar, cdnUrl) {
+      return function(container) {
+        container.innerHTML = `
+          <div class="demo-section">
+            <h2>Run ${libName.charAt(0).toUpperCase() + libName.slice(1)} Library</h2>
+            <div class="library-info">
+              Loading library from CDN: <code>${cdnUrl}</code><br>
+              Expected global variable: <code>${globalVar}</code>
+            </div>
+            <div id="ui-container-${libName}" style="margin: 20px 0; min-height: 200px; border: 1px solid #ddd; border-radius: 4px; padding: 15px; background: #fafafa;"></div>
+            <textarea class="code-editor" id="code-${libName}" style="display: none;"></textarea>
+            <div class="button-group">
+              <button onclick="loadAndRun${libName.charAt(0).toUpperCase() + libName.slice(1)}()">Load & Render</button>
+            </div>
+            <div id="output-${libName}" class="output"></div>
+          </div>
+        `;
+
+        const defaultCodes = {
+          jquery: `var container = document.getElementById('ui-container-jquery');
+container.innerHTML = '<div id="jquery-demo"><h3>jQuery Demo</h3><button id="jq-btn">Click Me!</button><div id="jq-result"></div></div>';
+var $ = this.$;
+$(document).ready(function() {
+  $('#jq-btn').on('click', function() {
+    $('#jq-result').html('<p style="color: green;">jQuery is working! Version: ' + $.fn.jquery + '</p>');
+  });
+});
+module.exports = { success: true, version: $.fn.jquery };`,
+          react: `var container = document.getElementById('ui-container-react');
+var React = this.React;
+var ReactDOM = this.ReactDOM;
+var count = 0;
+var root = ReactDOM.createRoot(container);
+var App = function() {
+  return React.createElement('div', { style: { padding: '20px' } },
+    React.createElement('h3', null, 'React Demo'),
+    React.createElement('p', { style: { fontSize: '18px', margin: '10px 0' } }, 'Count: ' + count),
+    React.createElement('button', {
+      onClick: function() { 
+        count++;
+        root.render(React.createElement(App));
+      },
+      style: { padding: '8px 16px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }
+    }, 'Increment')
+  );
+};
+root.render(React.createElement(App));
+module.exports = { success: true, version: React.version };`,
+          vue: `var container = document.getElementById('ui-container-vue');
+var Vue = this.Vue;
+var app = Vue.createApp({
+  data: function() {
+    return { count: 0 };
+  },
+  template: '<div><h3>Vue Demo</h3><p>Count: {{ count }}</p><button @click="increment">Increment</button></div>',
+  methods: {
+    increment: function() { this.count++; }
+  }
+});
+app.mount(container);
+module.exports = { success: true, version: Vue.version };`,
+          echarts: `var container = document.getElementById('ui-container-echarts');
+container.style.height = '700px';
+var echarts = this.echarts;
+var chart = echarts.init(container, null, { renderer: 'canvas' });
+var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+var salesData = [420, 532, 501, 534, 590, 630, 720, 680, 750, 820, 880, 950];
+var profitData = [180, 232, 201, 234, 290, 330, 420, 380, 450, 520, 580, 650];
+var forecastData = [950, 980, 1020, 1080, 1120, 1180];
+var pieData = [
+  { value: 2850, name: 'Product A', itemStyle: { color: '#5470c6' } },
+  { value: 1950, name: 'Product B', itemStyle: { color: '#91cc75' } },
+  { value: 1680, name: 'Product C', itemStyle: { color: '#fac858' } },
+  { value: 1240, name: 'Product D', itemStyle: { color: '#ee6666' } },
+  { value: 980, name: 'Product E', itemStyle: { color: '#73c0de' } }
+];
+var option = {
+  backgroundColor: {
+    type: 'linear',
+    x: 0,
+    y: 0,
+    x2: 1,
+    y2: 1,
+    colorStops: [
+      { offset: 0, color: '#1e3c72' },
+      { offset: 1, color: '#2a5298' }
+    ]
+  },
+  title: {
+    text: 'Advanced Business Analytics Dashboard',
+    left: 'center',
+    top: 20,
+    textStyle: {
+      color: '#fff',
+      fontSize: 24,
+      fontWeight: 'bold',
+      textShadowBlur: 10,
+      textShadowColor: 'rgba(0, 0, 0, 0.5)'
+    },
+    subtext: 'Multi-dimensional Data Visualization',
+    subtextStyle: {
+      color: '#ccc',
+      fontSize: 14
+    }
+  },
+  tooltip: {
+    trigger: 'axis',
+    axisPointer: {
+      type: 'shadow',
+      shadowStyle: { color: 'rgba(150, 150, 150, 0.1)' }
+    },
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderColor: '#5470c6',
+    borderWidth: 2,
+    textStyle: { color: '#fff' },
+    formatter: function(params) {
+      var result = params[0].name + '<br/>';
+      params.forEach(function(item) {
+        result += item.marker + item.seriesName + ': ' + item.value + '<br/>';
+      });
+      return result;
+    }
+  },
+  legend: {
+    data: ['Sales', 'Profit', 'Forecast', 'Revenue Distribution'],
+    top: 70,
+    textStyle: { color: '#fff' },
+    itemGap: 30
+  },
+  grid: {
+    left: '3%',
+    right: '28%',
+    top: '20%',
+    bottom: '15%',
+    containLabel: true
+  },
+  xAxis: {
+    type: 'category',
+    data: months,
+    axisLine: {
+      lineStyle: { color: '#fff', width: 2 }
+    },
+    axisLabel: {
+      color: '#fff',
+      rotate: 45,
+      fontSize: 11
+    },
+    axisTick: {
+      alignWithLabel: true,
+      lineStyle: { color: '#fff' }
+    },
+    splitLine: {
+      show: true,
+      lineStyle: { color: 'rgba(255, 255, 255, 0.1)', type: 'dashed' }
+    }
+  },
+  yAxis: [
+    {
+      type: 'value',
+      name: 'Amount (K)',
+      nameTextStyle: { color: '#fff' },
+      axisLine: {
+        lineStyle: { color: '#fff', width: 2 }
+      },
+      axisLabel: {
+        color: '#fff',
+        formatter: '{value}K'
+      },
+      splitLine: {
+        lineStyle: { color: 'rgba(255, 255, 255, 0.1)', type: 'dashed' }
+      }
+    },
+    {
+      type: 'value',
+      name: 'Growth Rate (%)',
+      nameTextStyle: { color: '#fff' },
+      position: 'right',
+      axisLine: {
+        lineStyle: { color: '#4ecdc4', width: 2 }
+      },
+      axisLabel: {
+        color: '#4ecdc4',
+        formatter: '{value}%'
+      },
+      splitLine: { show: false }
+    }
+  ],
+  series: [
+    {
+      name: 'Sales',
+      type: 'bar',
+      barWidth: '35%',
+      data: salesData,
+      itemStyle: {
+        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: '#83bff6' },
+          { offset: 0.5, color: '#188df0' },
+          { offset: 1, color: '#0052d9' }
+        ]),
+        borderRadius: [8, 8, 0, 0],
+        shadowBlur: 10,
+        shadowColor: 'rgba(24, 141, 240, 0.5)',
+        shadowOffsetY: 5
+      },
+      emphasis: {
+        itemStyle: {
+          shadowBlur: 20,
+          shadowColor: 'rgba(24, 141, 240, 0.8)'
+        }
+      },
+      animationDelay: function(idx) { return idx * 50; }
+    },
+    {
+      name: 'Profit',
+      type: 'bar',
+      barWidth: '35%',
+      data: profitData,
+      itemStyle: {
+        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: '#ffd89b' },
+          { offset: 0.5, color: '#ff9a56' },
+          { offset: 1, color: '#ff6b6b' }
+        ]),
+        borderRadius: [8, 8, 0, 0],
+        shadowBlur: 10,
+        shadowColor: 'rgba(255, 107, 107, 0.5)',
+        shadowOffsetY: 5
+      },
+      emphasis: {
+        itemStyle: {
+          shadowBlur: 20,
+          shadowColor: 'rgba(255, 107, 107, 0.8)'
+        }
+      },
+      animationDelay: function(idx) { return idx * 50 + 100; }
+    },
+    {
+      name: 'Forecast',
+      type: 'line',
+      yAxisIndex: 1,
+      data: [null, null, null, null, null, null].concat(forecastData),
+      smooth: true,
+      lineStyle: {
+        width: 4,
+        color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+          { offset: 0, color: '#4ecdc4' },
+          { offset: 1, color: '#44a08d' }
+        ]),
+        shadowBlur: 10,
+        shadowColor: 'rgba(78, 205, 196, 0.5)',
+        shadowOffsetY: 3
+      },
+      itemStyle: {
+        color: '#4ecdc4',
+        borderWidth: 3,
+        borderColor: '#fff',
+        shadowBlur: 8,
+        shadowColor: 'rgba(78, 205, 196, 0.6)'
+      },
+      areaStyle: {
+        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: 'rgba(78, 205, 196, 0.6)' },
+          { offset: 1, color: 'rgba(78, 205, 196, 0.1)' }
+        ])
+      },
+      symbol: 'circle',
+      symbolSize: 12,
+      animationDelay: function(idx) { return idx * 80 + 200; },
+      markLine: {
+        silent: true,
+        lineStyle: {
+          color: '#4ecdc4',
+          type: 'dashed',
+          width: 2
+        },
+        data: [
+          { xAxis: 5, label: { formatter: 'Current' } }
+        ],
+        label: {
+          color: '#fff',
+          fontSize: 12
+        }
+      }
+    },
+    {
+      name: 'Revenue Distribution',
+      type: 'pie',
+      radius: ['25%', '45%'],
+      center: ['88%', '50%'],
+      avoidLabelOverlap: true,
+      itemStyle: {
+        borderRadius: 12,
+        borderColor: '#1e3c72',
+        borderWidth: 3,
+        shadowBlur: 15,
+        shadowColor: 'rgba(0, 0, 0, 0.5)',
+        shadowOffsetX: 5,
+        shadowOffsetY: 5
+      },
+      label: {
+        show: true,
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: 'bold',
+        formatter: '{b}\\n{d}%'
+      },
+      labelLine: {
+        show: true,
+        lineStyle: { color: '#fff', width: 2 }
+      },
+      emphasis: {
+        label: {
+          show: true,
+          fontSize: 16,
+          fontWeight: 'bold'
+        },
+        itemStyle: {
+          shadowBlur: 25,
+          shadowColor: 'rgba(0, 0, 0, 0.8)',
+          shadowOffsetX: 8,
+          shadowOffsetY: 8
+        },
+        scale: true,
+        scaleSize: 10
+      },
+      data: pieData,
+      animationType: 'scale',
+      animationEasing: 'elasticOut',
+      animationDelay: function(idx) { return Math.random() * 300 + 400; }
+    }
+  ],
+  animation: true,
+  animationDuration: 2000,
+  animationEasing: 'cubicOut',
+  animationDelayUpdate: function(idx) { return idx * 20; }
+};
+chart.setOption(option);
+setInterval(function() {
+  var lastValue = salesData[salesData.length - 1];
+  salesData.shift();
+  salesData.push(lastValue + Math.floor(Math.random() * 100 - 50));
+  profitData.shift();
+  profitData.push(Math.floor(salesData[salesData.length - 1] * 0.65));
+  chart.setOption({
+    series: [
+      { data: salesData },
+      { data: profitData }
+    ]
+  });
+}, 3000);
+module.exports = { success: true, version: echarts.version };`,
+          angular: `var container = document.getElementById('ui-container-angular');
+var angular = this.angular;
+container.innerHTML = '<div ng-app="demoApp" ng-controller="DemoCtrl"><h3>Angular.js Demo</h3><p>Count: {{ count }}</p><button ng-click="increment()">Increment</button></div>';
+var app = angular.module('demoApp', []);
+app.controller('DemoCtrl', ['$scope', function($scope) {
+  $scope.count = 0;
+  $scope.increment = function() { $scope.count++; };
+}]);
+angular.bootstrap(container.querySelector('[ng-app]'), ['demoApp']);
+module.exports = { success: true, version: angular.version.full };`,
+          knockout: `var container = document.getElementById('ui-container-knockout');
+var ko = this.ko;
+var ViewModel = function() {
+  this.count = ko.observable(0);
+  this.increment = function() { this.count(this.count() + 1); };
+};
+container.innerHTML = '<div><h3>Knockout Demo</h3><p>Count: <span data-bind="text: count"></span></p><button data-bind="click: increment">Increment</button></div>';
+ko.applyBindings(new ViewModel(), container);
+module.exports = { success: true, version: ko.version };`,
+        };
+
+        document.getElementById(`code-${libName}`).value = defaultCodes[libName] || 'module.exports = { loaded: true };';
+
+        window[`loadAndRun${libName.charAt(0).toUpperCase() + libName.slice(1)}`] = async function() {
+          const code = document.getElementById(`code-${libName}`).value;
+          const output = document.getElementById(`output-${libName}`);
+          output.innerHTML = '<span class="loading"></span> Loading library from CDN...';
+
+          function runLibraryCode() {
+            try {
+              const libValue = window[globalVar];
+              if (typeof libValue === 'undefined') {
+                output.innerHTML = `<div class="error">Library ${globalVar} is not available. Please check if the CDN loaded correctly.</div>`;
+                return;
+              }
+
+              // Special handling for React - need ReactDOM
+              if (libName === 'react' && typeof window.ReactDOM === 'undefined') {
+                output.innerHTML = '<span class="loading"></span> Loading ReactDOM...';
+                const reactDOMScript = document.createElement('script');
+                reactDOMScript.src = 'https://unpkg.com/react-dom@18/umd/react-dom.development.js';
+                reactDOMScript.onload = () => {
+                  setTimeout(() => executeCode(), 100);
+                };
+                reactDOMScript.onerror = () => {
+                  output.innerHTML = `<div class="error">Failed to load ReactDOM from CDN</div>`;
+                };
+                document.head.appendChild(reactDOMScript);
+                return;
+              }
+
+              executeCode();
+
+              function executeCode() {
+                output.innerHTML = '<span class="loading"></span> Executing code...';
+                
+                // Create sandbox with the library and DOM access
+                const sandbox = {
+                  console,
+                  document: window.document,
+                  setInterval: window.setInterval.bind(window),
+                  clearInterval: window.clearInterval.bind(window),
+                  [globalVar]: window[globalVar],
+                };
+                
+                // Special handling for jQuery - need both $ and jQuery
+                if (libName === 'jquery') {
+                  sandbox.$ = window.$ || window.jQuery;
+                  sandbox.jQuery = window.jQuery || window.$;
+                }
+                
+                // Add ReactDOM for React
+                if (libName === 'react' && window.ReactDOM) {
+                  sandbox.ReactDOM = window.ReactDOM;
+                }
+                
+                // All code execution uses msdbox Interpreter (not native eval/Function)
+                // Use Interpreter directly to execute UMD code with library access
+                const interpreter = new Interpreter(sandbox, { timeout: 10000 });
+                
+                // Wrap code in UMD format
+                const wrappedCode = `
+                  var globalThis = this;
+                  var self = this;
+                  var window = this;
+                  var global = this;
+                  var define = undefined;
+                  var module = { exports: {} };
+                  var exports = module.exports;
+                  var document = this.document;
+                  var setInterval = this.setInterval;
+                  var clearInterval = this.clearInterval;
+                  var ${globalVar} = this.${globalVar};
+                  ${libName === 'jquery' ? 'var $ = this.$; var jQuery = this.jQuery;' : ''}
+                  ${libName === 'react' ? 'var ReactDOM = this.ReactDOM;' : ''}
+                  function require(name) { throw new Error('Remote UMD require("' + name + '") is not supported'); }
+                  ${code}
+                  ;(function(){
+                    var ex = module.exports;
+                    if (ex && (typeof ex === 'object' || typeof ex === 'function')) return ex;
+                    return ex;
+                  }).call(this);
+                `;
+                
+                const result = interpreter.evaluate(wrappedCode);
+                const time = interpreter.getExecutionTime();
+                
+                output.innerHTML = `<div class="success">Library loaded and rendered successfully!</div>Result: ${JSON.stringify(result, null, 2)}<br>Execution time: ${time}ms`;
+              }
+            } catch (error) {
+              output.innerHTML = `<div class="error">Execution Error: ${error.message}</div>`;
+            }
+          }
+
+          // Check if library is already loaded
+          if (typeof window[globalVar] !== 'undefined' && (libName !== 'react' || typeof window.ReactDOM !== 'undefined')) {
+            runLibraryCode();
+            return;
+          }
+
+          try {
+            const script = document.createElement('script');
+            script.src = cdnUrl;
+            script.onload = () => {
+              output.innerHTML = '<span class="loading"></span> Library loaded. Executing code...';
+              setTimeout(() => {
+                runLibraryCode();
+              }, 100);
+            };
+            script.onerror = () => {
+              output.innerHTML = `<div class="error">Failed to load library from CDN: ${cdnUrl}</div>`;
+            };
+            document.head.appendChild(script);
+          } catch (error) {
+            output.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+          }
+        };
+      };
+    }
+
+    // Initialize - check hash on load
+    function init() {
+      const hash = window.location.hash.slice(1); // Remove #
+      if (hash) {
+        // Check if hash matches a valid demo
+        const validDemos = ['self-interpreter', 'timeout', 'sandbox', 'jquery', 'react', 'vue', 'echarts', 'angular', 'knockout'];
+        if (validDemos.includes(hash)) {
+          showDemo(hash);
+          return;
+        }
+      }
+      showHome();
+    }
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', function() {
+      const hash = window.location.hash.slice(1);
+      if (hash) {
+        const validDemos = ['self-interpreter', 'timeout', 'sandbox', 'jquery', 'react', 'vue', 'echarts', 'angular', 'knockout'];
+        if (validDemos.includes(hash)) {
+          showDemo(hash);
+        } else {
+          showHome();
+        }
+      } else {
+        showHome();
+      }
+    });
+
+    // Initialize on page load
+    init();
+  </script>
+</body>
+</html>

@@ -1,8 +1,4 @@
-// NOTE:
-// - This file is a logic-preserving port of the original mini-program sandbox helper.
-// - Public API names intentionally avoid "eval" related wording.
-
-import { Interpreter, Function as InterpreterFunction } from '../internal/vendor/interpreter/index'
+import { Interpreter, Function as InterpreterFunction } from './internal/vendor/interpreter/index'
 
 export type UmdExecuteOptions = {
   /** Execution timeout (ms). Default: 8000 */
@@ -15,17 +11,14 @@ export type UmdExecuteOptions = {
 }
 
 function sanitizeForInterpreter(code: string): string {
-  // The interpreter does not support strict mode. Remove typical `"use strict";` directives.
   return code.replace(/(^|[\n;])\s*(['"])use strict\2\s*;?/g, '$1')
 }
 
 function buildRootContext(): Record<string, any> {
-  // Minimal whitelist: provide common built-ins without exposing the full global object.
   const g: any = globalThis as any
   return {
     Object: g.Object,
     Array: g.Array,
-    // Provide interpreter Function (helps libs that probe global Function)
     Function: InterpreterFunction,
     Number: g.Number,
     String: g.String,
@@ -51,16 +44,10 @@ export function executeUmd<T = unknown>(
   code: string,
   options: UmdExecuteOptions = {},
 ): { exported: T; costMs: number } {
-  // Avoid nullish-coalescing to keep compatibility with older JS parsers.
   const timeoutMs = (options.timeoutMs !== undefined && options.timeoutMs !== null) ? options.timeoutMs : 8000
   const globalVarName = options.globalVarName
 
   const rootContext = buildRootContext()
-  /**
-   * Key point:
-   * - Interpreter "global object" is the sandbox itself (this/globalThis/window in code)
-   * - Some libs read built-in prototypes, so these built-ins must exist on sandbox too
-   */
   const sandbox: Record<string, any> = Object.assign({}, rootContext, {
     console: (globalThis as any).console,
   })
@@ -79,17 +66,10 @@ export function executeUmd<T = unknown>(
     var window = this;
     var global = this;
     var define = undefined;
-
-    // CommonJS env
     var module = { exports: {} };
     var exports = module.exports;
-
-    // require stub: if UMD truly requires deps, throw immediately
     function require(name) { throw new Error('Remote UMD require(\"' + name + '\") is not supported'); }
-
     ${sanitized}
-
-    // Prefer module.exports; fallback to global var name if provided
     ;(function(){
       var ex = module.exports;
       if (ex && (typeof ex === 'object' || typeof ex === 'function')) return ex;
@@ -100,4 +80,3 @@ export function executeUmd<T = unknown>(
   const exported = interpreter.evaluate(bootstrap) as T
   return { exported, costMs: interpreter.getExecutionTime() }
 }
-
