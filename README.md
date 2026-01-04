@@ -2,61 +2,94 @@
 
 Execute **UMD script source text** in environments that disallow `eval/new Function`, and retrieve `module.exports` (optionally falling back to a global variable name).
 
+## Features
+
+- 🚫 **No eval/Function**: Pure JavaScript interpreter implementation
+- 🔒 **Safe execution**: Sandboxed environment with timeout support
+- 📦 **UMD support**: Execute UMD bundles and retrieve exports
+- ⚡ **Lightweight**: Minimal dependencies, tree-shakable exports
+- 🔧 **Flexible**: Advanced interpreter API for custom use cases
+
 ## Install
 
 ```bash
 npm i msdbox
 ```
 
-## Usage
+## Quick Start
 
-### Direct import
+### Basic Usage
 
 ```ts
 import { executeUmd } from 'msdbox'
 
 const { exported, costMs } = executeUmd<{ hello: string }>(
-  'module.exports = { hello: \"world\" }',
+  'module.exports = { hello: "world" }',
   { timeoutMs: 1000 },
 )
 
-console.log(exported.hello, costMs)
+console.log(exported.hello, costMs) // "world", <execution-time>
 ```
 
-### Subpath import (on-demand)
+### Subpath Import (On-demand)
+
+For better tree-shaking, use the subpath import:
 
 ```ts
 import { executeUmd } from 'msdbox/umd'
 ```
 
-## API
+## API Reference
 
 ### `executeUmd<T>(code, options?)`
 
-- **Parameters**
-  - **`code`**: `string` — UMD script source text
-  - **`options.timeoutMs`**: `number` — timeout (ms), default `8000`
-  - **`options.globalVarName`**: `string` — fallback global variable name (used only if `module.exports` is empty; reads from `this[globalVarName]`)
-- **Returns**
-  - **`exported`**: `T`
-  - **`costMs`**: `number` — execution time recorded by the interpreter
+Execute UMD script code and return the exported value.
 
-## Advanced: Interpreter API
+**Parameters:**
 
-If you need lower-level control (e.g. run non-UMD snippets, reuse a single context, or implement your own bootstrap), you can use the underlying interpreter exports.
+- **`code`** (`string`) — UMD script source text
+- **`options`** (`object`, optional)
+  - **`timeoutMs`** (`number`, default: `8000`) — Execution timeout in milliseconds
+  - **`globalVarName`** (`string`, optional) — Fallback global variable name (used only if `module.exports` is empty; reads from `this[globalVarName]`)
 
-### Exports
+**Returns:**
+
+- **`exported`** (`T`) — The exported value from `module.exports` or the fallback global variable
+- **`costMs`** (`number`) — Execution time recorded by the interpreter (milliseconds)
+
+**Example:**
+
+```ts
+const result = executeUmd(
+  `
+    var x = 1 + 2;
+    module.exports = { sum: x };
+  `,
+  { timeoutMs: 5000 }
+)
+
+console.log(result.exported.sum) // 3
+console.log(result.costMs) // <execution-time>
+```
+
+## Advanced Usage
+
+### Interpreter API
+
+For lower-level control (e.g., run non-UMD snippets, reuse a single context, or implement custom bootstrap logic), use the underlying interpreter exports.
+
+**Exports:**
 
 ```ts
 import { Interpreter, evaluate, vm, InterpreterFunction } from 'msdbox'
 ```
 
-- **`Interpreter`**: the interpreter class (runs code against a provided sandbox/context)
-- **`evaluate`**: convenience wrapper to run code in a context
-- **`vm`**: Node-like helpers (`runInContext`, `compileFunction`, etc.)
-- **`InterpreterFunction`**: interpreter-backed `Function` constructor (exported as a safer alias to avoid confusion with the global `Function`)
+- **`Interpreter`** — The interpreter class (runs code against a provided sandbox/context)
+- **`evaluate`** — Convenience wrapper to run code in a context
+- **`vm`** — Node-like helpers (`runInContext`, `compileFunction`, etc.)
+- **`InterpreterFunction`** — Interpreter-backed `Function` constructor (safer alias to avoid confusion with global `Function`)
 
-### Minimal example
+### Minimal Example
 
 ```ts
 import { Interpreter } from 'msdbox'
@@ -68,6 +101,29 @@ const result = interpreter.evaluate('var x = 1 + 2; x')
 console.log(result) // 3
 ```
 
+### Custom Context Example
+
+```ts
+import { Interpreter } from 'msdbox'
+
+const customContext = {
+  Math,
+  console,
+  customVar: 42,
+}
+
+const interpreter = new Interpreter(customContext, {
+  timeout: 5000,
+  ecmaVersion: 5,
+})
+
+const result = interpreter.evaluate(`
+  var doubled = customVar * 2;
+  Math.max(doubled, 10);
+`)
+console.log(result) // 84
+```
+
 ## Build
 
 ```bash
@@ -76,10 +132,21 @@ npm run build
 
 Build outputs are written to `dist/` and exposed via `package.json#exports` (both ESM and CJS entrypoints, tree-shakable).
 
-## Pack & local link
+## Development
+
+### Local Testing
 
 ```bash
 npm pack
 npm link
 ```
 
+### Project Structure
+
+- `src/umd/` — UMD execution utilities
+- `src/internal/vendor/interpreter/` — Pure JavaScript interpreter implementation
+- `dist/` — Compiled output (generated)
+
+## License
+
+MIT
