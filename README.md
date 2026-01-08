@@ -15,7 +15,7 @@ A lightweight JavaScript interpreter that executes UMD bundles and JavaScript co
 
 ## Playground
 
-Try msdbox online: **[https://steamedbread2333.github.io/mini-sandbox/playground](https://steamedbread2333.github.io/mini-sandbox/playground)**
+**[Try msdbox online](https://steamedbread2333.github.io/mini-sandbox/playground)**
 
 The playground includes interactive demos for:
 - Self-interpreter execution
