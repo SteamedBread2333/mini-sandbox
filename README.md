@@ -2,6 +2,10 @@
 
 A lightweight JavaScript interpreter that executes UMD bundles and JavaScript code in secure sandboxed environments, perfect for environments with Content Security Policy (CSP) restrictions that disallow `eval` and `new Function()`.
 
+[![npm version](https://img.shields.io/npm/v/msdbox?style=for-the-badge)](https://www.npmjs.com/package/msdbox)
+[![npm downloads](https://img.shields.io/npm/d18m/msdbox?style=for-the-badge)](https://www.npmjs.com/package/msdbox)
+[![deps](https://img.shields.io/github/license/SteamedBread2333/msdbox?style=for-the-badge)](https://www.npmjs.com/package/msdbox)
+
 ## Features
 
 - 🚫 **No eval/Function**: Pure JavaScript interpreter implementation
