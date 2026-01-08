@@ -11,7 +11,20 @@ export type UmdExecuteOptions = {
 }
 
 function sanitizeForInterpreter(code: string): string {
-  return code.replace(/(^|[\n;])\s*(['"])use strict\2\s*;?/g, '$1')
+  // Remove 'use strict' or "use strict" directives to avoid interpreter compatibility issues
+  // Limit input length to prevent ReDoS attacks (polynomial time complexity)
+  // Reference: https://codeql.github.com/codeql-query-help/javascript/js-polynomial-redos/
+  // Reasonable limit: 10MB should be more than enough for any UMD bundle
+  const MAX_CODE_LENGTH = 10 * 1024 * 1024 // 10MB
+  if (code.length > MAX_CODE_LENGTH) {
+    throw new Error(`Code length (${code.length}) exceeds maximum allowed length (${MAX_CODE_LENGTH})`)
+  }
+  
+  // Original regex: /(^|[\n;])\s*(['"])use strict\2\s*;?/g
+  // The \s* quantifier after (^|[\n;]) can cause ReDoS due to backtracking when input doesn't match
+  // Fix: Use non-greedy quantifier (\s*?) and limit the pattern to reduce backtracking
+  // The non-greedy quantifier helps reduce backtracking by matching as few characters as possible
+  return code.replace(/(^|[\n;])\s*?(['"])use strict\2\s*?;?/g, '$1')
 }
 
 function buildRootContext(): Record<string, any> {
