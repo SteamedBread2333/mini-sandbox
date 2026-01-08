@@ -1,6 +1,0 @@
-name: "CodeQL Config"
-
-# Exclude playground folder from CodeQL analysis
-# The playground folder contains demo/test code that doesn't need security scanning
-paths-ignore:
-  - "playground/**"
