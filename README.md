@@ -4,7 +4,6 @@ A lightweight JavaScript interpreter that executes UMD bundles and JavaScript co
 
 [![npm version](https://img.shields.io/npm/v/msdbox?style=for-the-badge)](https://www.npmjs.com/package/msdbox)
 [![npm downloads](https://img.shields.io/npm/d18m/msdbox?style=for-the-badge)](https://www.npmjs.com/package/msdbox)
-[![deps](https://img.shields.io/github/license/SteamedBread2333/msdbox?style=for-the-badge)](https://www.npmjs.com/package/msdbox)
 
 ## Features
 
