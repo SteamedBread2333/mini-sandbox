@@ -10,6 +10,16 @@ A lightweight JavaScript interpreter that executes UMD bundles and JavaScript co
 - ⚡ **Lightweight**: Minimal dependencies, tree-shakable exports
 - 🔧 **Flexible**: Advanced interpreter API for custom use cases
 
+## Playground
+
+Try msdbox online: **[https://steamedbread2333.github.io/mini-sandbox/playground](https://steamedbread2333.github.io/mini-sandbox/playground)**
+
+The playground includes interactive demos for:
+- Self-interpreter execution
+- Timeout protection
+- Sandbox isolation
+- Running popular libraries (jQuery, React, Vue, ECharts, Angular.js, Knockout)
+
 ## Install
 
 ```bash
